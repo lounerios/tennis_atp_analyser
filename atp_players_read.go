@@ -6,65 +6,67 @@ import (
     "bufio"
     "encoding/csv"
     "io"
-    "strconv"
     "gopkg.in/mgo.v2"
-
 )
 
 type player struct  {
-     id int
-     firstName string
-     lastName string
-     birthDate string
-     country string
+     Id string            `json: "Id", bson:"id"`
+     Firstname string     `json: "Firstname", bson:"Firstname"`
+     Lastname string      `json: "Lastname", bson:"Lastname"`
+     Status string        `json: "Status", bson:"Status"`
+     Birthdate string     `json: "Birthdate", bson:"BirtDate"`
+     Country string       `json: "Country", bson:"Country"`
 }
 
 func NewPlayer(csv_line []string) *player {
-    
-    id, err := strconv.Atoi(csv_line[0])
-    
-    if (err != nil)  {
-        return nil
-    } 
-
-    
-    return &player{id, csv_line[1], csv_line[2], csv_line[3], csv_line[4]} 
+    return &player{csv_line[0], csv_line[1], csv_line[2], csv_line[3], csv_line[4], csv_line[5]} 
 }
 
 func (p player) print() {
-     fmt.Printf("%d %s\n", p.id, p.lastName)
+     fmt.Printf("%d %s\n", p.Id, p.Lastname)
 }
 
 
 type database struct {
     url string
-    session mgo.Session
+    session *mgo.Session
     db *mgo.Database
-   
 }
 
-func (dbConn database) connect() error {
+func (dbConn *database) connect() error {
     session, err :=  mgo.Dial(dbConn.url)
     if (err != nil) {
         return err
     }
     
-    dbConn.session = *session
-    dbConn.db = session.DB("tennisatp")
-    
+    dbConn.session = session
+    dbConn.db = dbConn.session.DB("tennisatp")
+    dbConn.session.SetMode(mgo.Monotonic, true)
+
+    fmt.Println("Connect to ", dbConn.url)
     return nil
 }
 
-func (dbConn database) insertPlayer(p player) {
-    c := dbConn.db.C("players")
-    err := c.Insert(p)
+func (dbConn *database) insertPlayer(p player) {
+    if (dbConn.session == nil) {
+        return
+    }
+ 
+    fmt.Println(p)
+    coll := dbConn.db.C("players")
+    err := coll.Insert(&p)
 
     if (err != nil) {
+       checkErr(err)
        return
     }
 }
 
 func (dbConn database) close()  {
+   if (dbConn.session == nil) {
+       return
+   }
+   fmt.Println("Close connection")
    dbConn.session.Close()
 }
 
@@ -103,7 +105,7 @@ func main() {
      defer dbConn.close()
 
      reader := csv.NewReader(bufio.NewReader(file))
-     
+       
      for {
           csv_line, err := reader.Read()
           if (err == io.EOF) {
@@ -113,8 +115,8 @@ func main() {
          checkErr(err);
          
          p := NewPlayer(csv_line)
-
-         p.print()
+         dbConn.insertPlayer(*p)
+         p = nil       
      }
 
     
