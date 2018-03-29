@@ -1,13 +1,13 @@
 package main
 
 import (
-  "os"
-  "fmt"
-  "bufio"
-  "encoding/csv"
-  "io"
-  "utils"
-  "models"
+    "os"
+    "fmt"
+    "bufio"
+    "encoding/csv"
+    "io"
+    "utils"
+    "models"
 )
 
 func main() {
@@ -23,6 +23,7 @@ func main() {
      fmt.Println("Reading file ", filename)
 
      file, err := os.Open(filename)
+
      utils.CheckErr(err)
 
      defer file.Close()
@@ -36,16 +37,22 @@ func main() {
 
      reader := csv.NewReader(bufio.NewReader(file))
 
+     count := 0
      for {
           csv_line, err := reader.Read()
           if (err == io.EOF) {
               break;
           }
 
-         utils.CheckErr(err);
+          count = count + 1
+          fmt.Println(csv_line)
+          if (count == 1) {
+              continue
+          }
+          t := models.NewTournament(csv_line)
+          models.InsertTournament(dbConn, *t)
 
-         p := models.NewPlayer(csv_line)
-         models.InsertPlayer(dbConn, *p)
-         p = nil
+          m := models.NewMatch(csv_line)
+          models.InsertMatch(dbConn, *m)
      }
 }
