@@ -12,7 +12,7 @@ func InsertPlayer(dbConn *Database, p Player) error{
         return errors.New(DB_SESSION_IS_NULL)
     }
 
-    coll := dbConn.Db.C("players")
+    coll := dbConn.Db.C("player")
     err := coll.Insert(&p)
 
     return err
@@ -23,7 +23,7 @@ func InsertMatch(dbConn *Database, m Match) error{
         return errors.New("DB_SESSION_IS_NULL")
     }
 
-    coll := dbConn.Db.C("matches")
+    coll := dbConn.Db.C("match")
     err := coll.Insert(&m)
 
     return err
@@ -34,7 +34,7 @@ func InsertTournament(dbConn *Database, t Tournament) error{
         return errors.New("DB_SESSION_IS_NULL")
     }
 
-    coll := dbConn.Db.C("tournaments")
+    coll := dbConn.Db.C("tournament")
 
     n, err := coll.Find(bson.M{"id" : t.Id}).Count()
 
