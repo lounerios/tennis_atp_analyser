@@ -12,13 +12,14 @@ import (
 
 func main() {
      args := os.Args[1:]
-
-     if (len(args) != 1) {
-         fmt.Println("Please use the command:atp_read <filename>")
+     fmt.Println(len(args))
+     if (len(args) != 2) {
+         fmt.Println("Please use the command:atp_players_import <sqlitedb_file> <filename>")
          return;
      }
 
-     filename := args[0]
+     dbFilename := args[0]
+     filename := args[1]
 
      fmt.Println("Reading file ", filename)
 
@@ -27,9 +28,10 @@ func main() {
 
      defer file.Close()
 
-     dbConn := models.NewDatabase("mongodb://127.0.0.1")
+     dbConn := models.NewDatabase(dbFilename)
 
      err = dbConn.Connect()
+
      utils.CheckErr(err)
 
      defer dbConn.Close()

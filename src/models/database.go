@@ -1,40 +1,39 @@
 package models
 
 import (
-    "gopkg.in/mgo.v2"
+       "database/sql"
+       _ "github.com/mattn/go-sqlite3"
 )
 
 type Database struct {
-    url string
-    Session *mgo.Session
-    Db *mgo.Database
+    filename string
+    db *sql.DB
 }
 
-func NewDatabase(db_url string) *Database {
-  dbConn := new(Database)
-  dbConn.url = db_url
+func NewDatabase(dbFilename string) *Database {
+	dbConn := new(Database)
+	dbConn.filename = dbFilename
 
-  return dbConn
+	return dbConn
 }
 
 func (dbConn *Database) Connect() error {
-    session, err :=  mgo.Dial(dbConn.url)
-    if (err != nil) {
+     conn, err := sql.Open("sqlite3", dbConn.filename)
+
+     if err != nil {
         return err
-    }
+     }
 
-    dbConn.Session = session
-    dbConn.Db = dbConn.Session.DB("tennisatp")
-    dbConn.Session.SetMode(mgo.Monotonic, true)
-
-    return nil
+     dbConn.db = conn
+     
+     return nil
 }
 
+func (dbConn *Database) Close() {
+      if dbConn.db == nil {
+	      return
+      }
 
-func (dbConn Database) Close()  {
-   if (dbConn.Session == nil) {
-       return
-   }
-
-   dbConn.Session.Close()
+      dbConn.db.Close()
 }
+
