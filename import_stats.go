@@ -9,6 +9,7 @@ import (
   "utils"
   "models"
   "flag"
+  "time"
 )
 
 func main() {
@@ -41,13 +42,22 @@ func main() {
 
      reader := csv.NewReader(bufio.NewReader(file))
 
+     count := 0
+     start := time.Now()
      for {
           csv_line, err := reader.Read()
           if (err == io.EOF) {
               break;
           }
+         if (count % 1000 == 0) {
+	     t := time.Now()
+             elapsed := t.Sub(start)
+	     start = time.Now()
+	     fmt.Println("Time for 1000 records:", elapsed, " records:", count)
 
-         utils.CheckErr(err);
+	 }
+         utils.CheckErr(err)
+	 count = count + 1
          switch *objectPtr { 
          case "ranking":
              r := models.NewAtpRanking(csv_line)
@@ -58,7 +68,6 @@ func main() {
              models.InsertPlayer(dbConn, *p)
              p = nil
          case "match":
-             count = count + 1
              if (count == 1) {
                  continue
              }
