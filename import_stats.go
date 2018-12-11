@@ -57,15 +57,21 @@ func main() {
 
 	 }
          utils.CheckErr(err)
-	 count = count + 1
          switch *objectPtr { 
          case "ranking":
              r := models.NewAtpRanking(csv_line)
 	     models.InsertAtpRanking(dbConn, *r)
+	     count = count + 1
 	     r = nil
          case "player":
 	     p := models.NewPlayer(csv_line)
-             models.InsertPlayer(dbConn, *p)
+	     err := models.InsertPlayer(dbConn, *p)
+	     if (err != nil) {
+		 fmt.Println(err)
+	     }else {
+		 count = count + 1;
+	     }
+	       
              p = nil
          case "match":
              if (count == 1) {
