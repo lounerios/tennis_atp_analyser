@@ -2,7 +2,7 @@ package models
 
 import (
   "strings"
-  "utils"
+  "../utils"
 )
 
 const (

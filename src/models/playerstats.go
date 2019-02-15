@@ -1,7 +1,7 @@
 package models
 
 import (
-  "utils"
+  "../utils"
 )
 
 type PlayerStats struct {

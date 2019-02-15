@@ -25,7 +25,7 @@ func (dbConn *Database) Connect() error {
      }
 
      dbConn.db = conn
-     
+
      return nil
 }
 
@@ -36,4 +36,3 @@ func (dbConn *Database) Close() {
 
       dbConn.db.Close()
 }
-
