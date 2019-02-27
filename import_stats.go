@@ -89,8 +89,8 @@ func importFile(filename string, object string, dbConn *models.Database) error {
 func main() {
      args := os.Args[1:]
 
-     if (len(args) < 3 && len(args) > 4) {
-	     fmt.Println("Please use the command:import_stats -object=<object> -input=<input> <sqlitedb_file> <input_value>")
+     if (len(args) < 3 || len(args) > 4) {
+	 fmt.Println("Please use the command:import_stats -object=<object> -input=<input> <sqlitedb_file> <input_value>")
          return;
      }
 
