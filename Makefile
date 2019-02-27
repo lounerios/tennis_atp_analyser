@@ -1,6 +1,8 @@
-PWD=$(pwd)
-export GOPATH=/root/mydev/tennis_atp_analyser/:/root/go/
+#!/bin/bash
+
+CurDir=$(pwd)
+export GOPATH=$(CurDir)/tennis_atp_analyser/:$(HOME)/go
 
 edit:
-	go build import_stats.go
+	go build -o bin/import_stats import_stats.go
 
