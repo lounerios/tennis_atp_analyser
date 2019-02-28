@@ -36,7 +36,6 @@ func importFile(filename string, object string, dbConn *models.Database) error {
   count := 0
   startTime = time.Now()
 
-
   for {
        csv_line, err := reader.Read()
        if (err == io.EOF) {
@@ -63,13 +62,12 @@ func importFile(filename string, object string, dbConn *models.Database) error {
          case "match":
            t := models.NewTournament(csv_line)
            m := models.NewMatch(csv_line)
+           fmt.Println("Tournament:", t.Name, " Id:", t.Id, " Match:", m.MatchNum, " Sets:", m.Sets)
+           err = models.InsertTournament(dbConn, *t)
 
-           fmt.Println("Tournament:",t.Name, " Match:", m.MatchNum)
            count = count + 1
 
           //models.InsertTournament(dbConn, *t)
-
-
           //models.InsertMatch(dbConn, *m)
         }
 
@@ -83,14 +81,14 @@ func importFile(filename string, object string, dbConn *models.Database) error {
   elapsed := getDuration()
   fmt.Println("Time:", elapsed, " records:", count)
 
-  return err
+  return nil
 }
 
 func main() {
      args := os.Args[1:]
 
      if (len(args) < 3 || len(args) > 4) {
-	 fmt.Println("Please use the command:import_stats -object=<object> -input=<input> <sqlitedb_file> <input_value>")
+         fmt.Println("Please use the command:import_stats -object=<object> -input=<input> <sqlitedb_file> <input_value>")
          return;
      }
 
@@ -133,12 +131,14 @@ func main() {
                }
 
                if(info.IsDir() && depth > 1) {
-                 return filepath.SkipDir
+                 return nil
                }
 
                if(strings.Index(info.Name(),filters[*objectPtr]) == 0){
                   err = importFile(path, *objectPtr, dbConn)
-                  fmt.Println(err)
+                  if err != nil {
+                    return err
+                  }
                }
 
 
@@ -152,5 +152,4 @@ func main() {
          return
        }
      }
-
 }
