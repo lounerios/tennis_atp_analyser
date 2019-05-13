@@ -1,106 +1,86 @@
 package models
 
 import (
-  "errors"
+	"errors"
+	"log"
 )
 
 const DB_SESSION_IS_NULL string = "DB session is NULL"
 
-func InsertPlayer(dbConn *Database, p Player) error{
-    if dbConn.db == nil {
-        return errors.New(DB_SESSION_IS_NULL)
-    }
+func InsertPlayer(dbConn *Database, p Player) error {
+	if dbConn.db == nil {
+		return errors.New(DB_SESSION_IS_NULL)
+	}
 
-    stmt, err := dbConn.db.Prepare("INSERT INTO player(id, firstname, lastname, status, birthdate, country) values(?,?,?,?,?,?)")
+	var op Player
 
-    if err != nil {
-	    return err
-    }
+	dbConn.db.Where(&Player{ID: p.ID}).First(&op)
 
-    defer stmt.Close()
+	if op.ID != p.ID {
+		dbConn.db.Create(&p)
+	} else {
+		return errors.New("Duplicate")
+	}
 
-    _, err = stmt.Exec(p.Id, p.Firstname, p.Lastname, p.Status, p.Birthdate, p.Country)
-
-    return err
+	return nil
 }
 
-func InsertAtpRanking(dbConn *Database, ar AtpRanking) error{
-    if dbConn.db == nil {
-        return errors.New(DB_SESSION_IS_NULL)
-    }
+func InsertAtpRanking(dbConn *Database, ar AtpRanking) error {
+	if dbConn.db == nil {
+		return errors.New(DB_SESSION_IS_NULL)
+	}
 
-    stmt, err := dbConn.db.Prepare("INSERT INTO atp_ranking(date, number, player_id, points) values(?,?,?,?)")
+	var oar AtpRanking
 
-    if err != nil {
-       return err
-    }
+	dbConn.db.Where(&AtpRanking{PlayerId: ar.PlayerId, Date: ar.Date}).First(&oar)
 
-    defer stmt.Close()
+	if oar.PlayerId != ar.PlayerId {
+		dbConn.db.Create(&ar)
+	} else {
+		return errors.New("Duplicate")
+	}
 
-    _, err = stmt.Exec(ar.Date, ar.Number, ar.Player_Id, ar.Points)
-
-    return err
+	return nil
 }
 
-/*
-func InsertMatch(dbConn *Database, m Match) error{
-    if (dbConn.Session == nil) {
-        return errors.New("DB_SESSION_IS_NULL")
-    }
+func InsertTournament(dbConn *Database, t Tournament) error {
+	if dbConn.db == nil {
+		return errors.New(DB_SESSION_IS_NULL)
+	}
 
-    coll := dbConn.Db.C("match")
-    err := coll.Insert(&m)
+	var ot Tournament
 
-    return err
-}
-*/
+	dbConn.db.Where(&Tournament{ID: t.ID}).First(&ot)
+	log.Println(ot, t.ID)
+	if ot.ID != t.ID {
+		dbConn.db.Create(&t)
+	} else {
+		return errors.New("Duplicate")
+	}
 
-func GetTournamentById(dbConn *Database, id string) (*Tournament, error) {
-    if dbConn.db == nil {
-        return nil, errors.New(DB_SESSION_IS_NULL)
-    }
-
-    stmt,err := dbConn.db.Prepare("SELECT * FROM tournament WHERE id = ?")
-
-    if err != nil {
-       return nil, err
-    }
-
-    defer stmt.Close()
-
-    rows,err := stmt.Query(id)
-
-    defer rows.Close()
-
-    if rows.Next() {
-      t := new(Tournament)
-      //todo: copy row data to tournament object
-
-      return t, nil
-    }
-    return nil, nil
+	return nil
 }
 
-func InsertTournament(dbConn *Database, t Tournament) error{
-    if dbConn.db == nil {
-        return errors.New(DB_SESSION_IS_NULL)
-    }
+func InsertMatch(dbConn *Database, m Match) error {
+	if dbConn.db == nil {
+		return errors.New(DB_SESSION_IS_NULL)
+	}
 
-    trnTournament,err := GetTournamentById(dbConn, t.Id)
+	var om Match
 
-    if trnTournament != nil {
-       return nil
-    }
+	dbConn.db.First(&om, m.ID)
 
-    stmt, err := dbConn.db.Prepare("INSERT INTO tournament(id, name, surface, draw_size, level, date) values(?,?,?,?,?,?)")
+	if om.ID != m.ID {
+		dbConn.db.Debug().Create(&m)
 
-    if err != nil {
-       return err
-    }
+		for _, s := range m.Sets {
+			s.MatchId = m.ID
+			dbConn.db.Debug().Create(&s)
+		}
+	} else {
+		return errors.New("Duplicate")
+	}
 
-    defer stmt.Close()
+	return nil
 
-    _, err = stmt.Exec(t.Id, t.Name, t.Surface, t.DrawSize, t.Level, t.Date)
-
-    return err
 }

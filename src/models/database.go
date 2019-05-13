@@ -1,13 +1,13 @@
 package models
 
 import (
-       "database/sql"
-       _ "github.com/mattn/go-sqlite3"
+	"github.com/jinzhu/gorm"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type Database struct {
-    filename string
-    db *sql.DB
+	filename string
+	db       *gorm.DB
 }
 
 func NewDatabase(dbFilename string) *Database {
@@ -18,21 +18,25 @@ func NewDatabase(dbFilename string) *Database {
 }
 
 func (dbConn *Database) Connect() error {
-     conn, err := sql.Open("sqlite3", dbConn.filename)
+	db, err := gorm.Open("sqlite3", dbConn.filename)
 
-     if err != nil {
-        return err
-     }
+	if err != nil {
+		return err
+	}
 
-     dbConn.db = conn
+	if !db.HasTable(&Player{}) {
+		db.Debug().AutoMigrate(&Player{}, &Match{}, &MatchSet{}, &PlayerStats{}, AtpRanking{}, Tournament{})
+	}
 
-     return nil
+	dbConn.db = db
+
+	return nil
 }
 
 func (dbConn *Database) Close() {
-      if dbConn.db == nil {
-	      return
-      }
+	if dbConn.db == nil {
+		return
+	}
 
-      dbConn.db.Close()
+	dbConn.db.Close()
 }
