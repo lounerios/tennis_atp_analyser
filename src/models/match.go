@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"../utils"
-	"github.com/jinzhu/gorm"
 )
 
 const (
@@ -44,7 +43,7 @@ const (
 )
 
 type Match struct {
-	gorm.Model
+	ID           uint
 	TournamentId string     `gorm:"index:tournid"`
 	MatchNum     string     `gorm:"index:matchnum"`
 	Sets         []MatchSet `gorm: "-"`

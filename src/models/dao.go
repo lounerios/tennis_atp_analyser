@@ -2,14 +2,16 @@ package models
 
 import (
 	"errors"
-	"log"
 )
 
-const DB_SESSION_IS_NULL string = "DB session is NULL"
+var (
+	ErrDBNotFound = errors.New("Database is NULL")
+	ErrDuplicate  = errors.New("Duplicate entry")
+)
 
 func InsertPlayer(dbConn *Database, p Player) error {
 	if dbConn.db == nil {
-		return errors.New(DB_SESSION_IS_NULL)
+		return ErrDBNotFound
 	}
 
 	var op Player
@@ -19,7 +21,7 @@ func InsertPlayer(dbConn *Database, p Player) error {
 	if op.ID != p.ID {
 		dbConn.db.Create(&p)
 	} else {
-		return errors.New("Duplicate")
+		return ErrDuplicate
 	}
 
 	return nil
@@ -27,7 +29,7 @@ func InsertPlayer(dbConn *Database, p Player) error {
 
 func InsertAtpRanking(dbConn *Database, ar AtpRanking) error {
 	if dbConn.db == nil {
-		return errors.New(DB_SESSION_IS_NULL)
+		return ErrDBNotFound
 	}
 
 	var oar AtpRanking
@@ -37,7 +39,7 @@ func InsertAtpRanking(dbConn *Database, ar AtpRanking) error {
 	if oar.PlayerId != ar.PlayerId {
 		dbConn.db.Create(&ar)
 	} else {
-		return errors.New("Duplicate")
+		return ErrDuplicate
 	}
 
 	return nil
@@ -45,42 +47,38 @@ func InsertAtpRanking(dbConn *Database, ar AtpRanking) error {
 
 func InsertTournament(dbConn *Database, t Tournament) error {
 	if dbConn.db == nil {
-		return errors.New(DB_SESSION_IS_NULL)
+		return ErrDBNotFound
 	}
-
 	var ot Tournament
 
 	dbConn.db.Where(&Tournament{ID: t.ID}).First(&ot)
-	log.Println(ot, t.ID)
 	if ot.ID != t.ID {
 		dbConn.db.Create(&t)
 	} else {
-		return errors.New("Duplicate")
+		return ErrDuplicate
 	}
-
 	return nil
 }
 
 func InsertMatch(dbConn *Database, m Match) error {
 	if dbConn.db == nil {
-		return errors.New(DB_SESSION_IS_NULL)
+		return ErrDBNotFound
 	}
 
 	var om Match
 
-	dbConn.db.First(&om, m.ID)
+	dbConn.db.Where(&Match{TournamentId: m.TournamentId, MatchNum: m.MatchNum}).First(&om)
 
-	if om.ID != m.ID {
-		dbConn.db.Debug().Create(&m)
+	if m.MatchNum != om.MatchNum {
+		dbConn.db.Create(&m)
 
 		for _, s := range m.Sets {
 			s.MatchId = m.ID
-			dbConn.db.Debug().Create(&s)
+			dbConn.db.Create(&s)
 		}
 	} else {
-		return errors.New("Duplicate")
+		return ErrDuplicate
 	}
 
 	return nil
-
 }

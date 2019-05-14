@@ -16,7 +16,10 @@ import (
 	"./src/utils"
 )
 
-var startTime = time.Now()
+var (
+	startTime time.Time
+	beginTime = time.Now()
+)
 
 func getDuration() time.Duration {
 	currentTime := time.Now()
@@ -27,7 +30,8 @@ func getDuration() time.Duration {
 }
 
 func importFile(filename string, object string, dbConn *models.Database) error {
-	fmt.Println("Import file:", filename, " at ", startTime)
+
+	log.Println("Import file:", filename, " at ", startTime)
 	file, err := os.Open(filename)
 
 	if err != nil {
@@ -41,13 +45,14 @@ func importFile(filename string, object string, dbConn *models.Database) error {
 	for {
 
 		csv_line, err := reader.Read()
+
 		if err == io.EOF {
 			break
 		}
 
 		if count%1000 == 0 {
 			elapsed := getDuration()
-			fmt.Println("Time for 1000 records:", elapsed, " records:", count)
+			log.Println("Time for 1000 records:", elapsed, " records:", count)
 		}
 
 		switch object {
@@ -61,22 +66,25 @@ func importFile(filename string, object string, dbConn *models.Database) error {
 
 		case "match":
 			t := models.NewTournament(csv_line)
-			fmt.Println(t.ID)
 			m := models.NewMatch(csv_line)
-			fmt.Println("Tournament:", t.Name, " Id:", t.ID, " Match:", m.MatchNum, " Sets:", m.Sets)
 			err = models.InsertTournament(dbConn, *t)
+			if err == models.ErrDuplicate {
+				continue
+			}
+
 			err = models.InsertMatch(dbConn, *m)
 		}
 
-		if err != nil {
+		if err != nil && err != models.ErrDuplicate {
 			log.Println(err)
+		} else {
+			count = count + 1
 		}
 
-		count = count + 1
 	}
 
-	elapsed := getDuration()
-	fmt.Println("Time:", elapsed, " records:", count)
+	elapsed := time.Now().Sub(beginTime)
+	log.Println("Time:", elapsed, " records:", count)
 
 	return nil
 }
@@ -96,8 +104,6 @@ func main() {
 	dbFilename := args[2]
 	filename := args[3]
 
-	fmt.Println("The file of database: ", dbFilename)
-
 	filters := map[string]string{
 		"player":  "atp_players_",
 		"match":   "atp_matches_",
@@ -116,14 +122,14 @@ func main() {
 		err = importFile(filename, *objectPtr, dbConn)
 
 	} else if *inputPtr == "directory" {
-		fmt.Println("Directory:", *inputPtr)
-		fmt.Println("Filter:", filters[*objectPtr])
+		log.Println("Directory:", *inputPtr)
+		log.Println("Filter:", filters[*objectPtr])
 
 		depth := 1
 
 		err := filepath.Walk(filename, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
-				fmt.Println("Cannot access the path")
+				log.Println("Cannot access the path")
 				return err
 			}
 
@@ -144,7 +150,7 @@ func main() {
 		})
 
 		if err != nil {
-			fmt.Println("Error walking the path", err)
+			log.Println("Error walking the path", err)
 			return
 		}
 	}

@@ -1,22 +1,21 @@
 package utils
 
 import (
-  "strconv"
+	"strconv"
 )
 
 func CheckErr(e error) {
-    if (e != nil) {
-        panic(e)
-    }
+	if e != nil {
+		panic(e)
+	}
 }
 
-
 func GetNumber(s string) int {
-    num, err := strconv.Atoi(s)
+	num, err := strconv.Atoi(s)
 
-    if (err != nil) {
-        return 0
-     }
+	if err != nil {
+		return 0
+	}
 
-    return num
+	return num
 }
